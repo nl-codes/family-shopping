@@ -57,7 +57,5 @@ const sessionSchema = new Schema({
   expiresAt: { type: Date, required: true, expires: 0 },
 });
 const attemptSchema = new Schema({ _id: String, count: Number, expiresAt: { type: Date, expires: 0 } });
-const claimSchema = new Schema({ _id: String, ownerTokenEncrypted: String, expiresAt: { type: Date, expires: 0 } });
 export const ListSessionModel = mongoose.models.ListSession || mongoose.model('ListSession', sessionSchema);
 export const AccessAttemptModel = mongoose.models.AccessAttempt || mongoose.model('AccessAttempt', attemptSchema);
-export const OwnerClaimModel = mongoose.models.OwnerClaim || mongoose.model('OwnerClaim', claimSchema);

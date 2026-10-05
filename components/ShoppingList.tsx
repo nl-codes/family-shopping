@@ -17,6 +17,10 @@ import {
   Users,
   Check,
   List as ListIcon,
+  Lock,
+  Search,
+  KeyRound,
+  Eye,
 } from "lucide-react";
 import { categories, type Item, type User, type List } from "@/lib/types";
 import ItemRow from "./ItemRow";
@@ -61,6 +65,13 @@ export default function ShoppingList() {
     [editing, setEditing] = useState<Item>();
   const [showArchived, setShowArchived] = useState(false);
   const [itemView, setItemView] = useState<ItemView>("list");
+  const [listSearch, setListSearch] = useState("");
+  const [accessListId, setAccessListId] = useState("");
+  const [accessCode, setAccessCode] = useState("");
+  const [accessError, setAccessError] = useState("");
+  const [ownerCode, setOwnerCode] = useState("");
+  const [ownerCodeLoading, setOwnerCodeLoading] = useState(false);
+  const [ownerCodeCopied, setOwnerCodeCopied] = useState(false);
   useEffect(() => {
     try {
       const saved = localStorage.getItem("shopping-item-view");
@@ -97,9 +108,9 @@ export default function ShoppingList() {
             ""),
       );
       setListId((current) =>
-        allLists.some((l) => l._id === current)
+        allLists.some((l) => l._id === current && l.unlocked)
           ? current
-          : (allLists.find((l) => !l.isArchived)?._id ?? ""),
+          : (allLists.find((l) => !l.isArchived && l.unlocked)?._id ?? ""),
       );
     } catch (e) {
       setError((e as Error).message);
@@ -162,7 +173,47 @@ export default function ShoppingList() {
     .filter((category) => !categories.some((preset) => preset === category))
     .sort((a, b) => a.localeCompare(b));
   const groupedCategories = [...categories, ...customCategories];
-  const visibleLists = lists.filter((l) => showArchived || !l.isArchived);
+  const visibleLists = lists
+    .filter((l) => showArchived || !l.isArchived)
+    .filter((l) =>
+      l.title.toLocaleLowerCase().includes(listSearch.trim().toLocaleLowerCase()),
+    );
+  const accessList = lists.find((list) => list._id === accessListId);
+  const chooseList = (list: List) => {
+    setError("");
+    if (list.unlocked) {
+      setListId(list._id);
+      return;
+    }
+    setAccessListId(list._id);
+    setAccessCode("");
+    setAccessError("");
+  };
+  const loadOwnerCode = async () => {
+    if (!selected?.isOwner) return;
+    setOwnerCodeLoading(true);
+    try {
+      const result = await request<{ code: string }>(
+        `/api/lists/${selected._id}/access`,
+      );
+      setOwnerCode(result.code);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setOwnerCodeLoading(false);
+    }
+  };
+  const copyOwnerCode = async () => {
+    if (!ownerCode) return;
+    await navigator.clipboard.writeText(ownerCode);
+    setOwnerCodeCopied(true);
+    window.setTimeout(() => setOwnerCodeCopied(false), 1800);
+  };
+  useEffect(() => {
+    setOwnerCode("");
+    setOwnerCodeCopied(false);
+    if (selected?.isOwner) void loadOwnerCode();
+  }, [selected?._id, selected?.isOwner]);
   const mutateItem = (item: Item, method: string, data?: object) =>
     run(async () => {
       await request(`/api/items/${item._id}`, method, data);
@@ -225,15 +276,13 @@ export default function ShoppingList() {
             <button
               key={list._id}
               disabled={busy}
-              onClick={() => {
-                setListId(list._id);
-                setError("");
-              }}
+              onClick={() => chooseList(list)}
               className={`list-link ${listId === list._id ? "active" : ""}`}
             >
               <ListIcon size={18} />
               <span>{list.title}</span>
               {list.isArchived && <Archive size={14} />}
+              {!list.unlocked && <Lock size={14} aria-label="Access code required" />}
             </button>
           ))}
         </nav>
@@ -322,7 +371,10 @@ export default function ShoppingList() {
             <select
               aria-label="Select shopping list"
               value={listId}
-              onChange={(e) => setListId(e.target.value)}
+              onChange={(e) => {
+                const list = lists.find((value) => value._id === e.target.value);
+                if (list) chooseList(list);
+              }}
             >
               <option value="" disabled>
                 Select a list
@@ -340,6 +392,46 @@ export default function ShoppingList() {
               disabled={!actor}
             >
               <Plus />
+          <section className="browse-lists" aria-labelledby="browse-lists-title">
+            <div className="browse-heading">
+              <div>
+                <span className="eyebrow">SHARED WITH HOME</span>
+                <h2 id="browse-lists-title">Browse lists</h2>
+              </div>
+              <span className="browse-count">{visibleLists.length} list{visibleLists.length === 1 ? "" : "s"}</span>
+            </div>
+            <label className="browse-search">
+              <Search size={16} aria-hidden="true" />
+              <span className="sr-only">Search lists</span>
+              <input
+                value={listSearch}
+                onChange={(event) => setListSearch(event.target.value)}
+                placeholder="Search by list name"
+              />
+            </label>
+            <div className="browse-results">
+              {visibleLists.map((list) => (
+                <button
+                  key={list._id}
+                  className={`browse-list ${listId === list._id ? "selected" : ""}`}
+                  onClick={() => chooseList(list)}
+                  disabled={busy}
+                >
+                  <span className="browse-list-icon">
+                    {list.unlocked ? <ListIcon size={17} /> : <Lock size={16} />}
+                  </span>
+                  <span className="browse-list-copy">
+                    <strong>{list.title}</strong>
+                    <small>{list.isArchived ? "Archived list" : list.unlocked ? "Open list" : "Access code required"}</small>
+                  </span>
+                  <span className="browse-list-action">
+                    {list.unlocked ? "Open" : "Unlock"}
+                  </span>
+                </button>
+              ))}
+              {!visibleLists.length && <p className="browse-empty">No lists match your search.</p>}
+            </div>
+          </section>
             </button>
           </div>
           {error && (
@@ -572,6 +664,32 @@ export default function ShoppingList() {
               </button>
             )}
           </div>
+          {selected?.isOwner && (
+            <div className="owner-access">
+              <div>
+                <span className="eyebrow">LIST OWNER</span>
+                <strong>Share this access code</strong>
+                <p>Anyone with this code can open the items in this list.</p>
+              </div>
+              {ownerCode ? (
+                <button
+                  type="button"
+                  className="owner-code"
+                  onClick={() => void copyOwnerCode()}
+                  aria-label="Copy access code"
+                  title="Copy access code"
+                >
+                  <code>{ownerCode}</code>
+                  <span>{ownerCodeCopied ? "Copied" : "Copy"}</span>
+                </button>
+              ) : (
+                <button className="secondary" onClick={() => void loadOwnerCode()} disabled={ownerCodeLoading}>
+                  <Eye size={16} />
+                  {ownerCodeLoading ? "Loading…" : "Show code"}
+                </button>
+              )}
+            </div>
+          )}
           <div className="note-card">
             <div>
               <span className="eyebrow">BETTER, TOGETHER</span>
@@ -681,6 +799,74 @@ export default function ShoppingList() {
                 </button>
                 <button className="primary" disabled={busy}>
                   {busy ? "Saving…" : "Create"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+      {accessList && (
+        <div className="modal-backdrop">
+          <section className="modal" role="dialog" aria-modal="true" aria-labelledby="access-title">
+            <div className="section-heading">
+              <h2 id="access-title">Unlock {accessList.title}</h2>
+              <button
+                className="icon-button"
+                onClick={() => setAccessListId("")}
+                aria-label="Close access form"
+                disabled={busy}
+              >
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <p className="muted">Enter the six-letter code shared by the list owner.</p>
+            <form
+              className="access-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setBusy(true);
+                setAccessError("");
+                void (async () => {
+                  try {
+                    await request(`/api/lists/${accessList._id}/access`, "POST", {
+                      code: accessCode,
+                    });
+                    const openedListId = accessList._id;
+                    await load();
+                    setListId(openedListId);
+                    setAccessListId("");
+                  } catch (e) {
+                    setAccessError((e as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                })();
+              }}
+            >
+              <label>
+                Access code
+                <input
+                  value={accessCode}
+                  onChange={(event) => {
+                    setAccessCode(event.target.value.toLowerCase().replace(/[^a-z-]/g, "").slice(0, 7));
+                    setAccessError("");
+                  }}
+                  placeholder="abc-def"
+                  maxLength={7}
+                  pattern="[a-zA-Z]{3}-?[a-zA-Z]{3}"
+                  autoComplete="off"
+                  autoFocus
+                  required
+                />
+              </label>
+              {accessError && <p className="error" role="alert">{accessError}</p>}
+              <div className="dialog-actions">
+                <button type="button" className="secondary" onClick={() => setAccessListId("")} disabled={busy}>
+                  Cancel
+                </button>
+                <button className="primary" disabled={busy || accessCode.replace("-", "").length !== 6}>
+                  <KeyRound size={17} />
+                  {busy ? "Checking…" : "Open list"}
                 </button>
               </div>
             </form>
