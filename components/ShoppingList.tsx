@@ -250,6 +250,7 @@ export default function ShoppingList() {
                         category: item.category,
                         isRecurring: item.isRecurring,
                         estimatedPrice: item.estimatedPrice,
+                        purchaseLocation: item.purchaseLocation,
                     });
                     await refreshItems();
                 })

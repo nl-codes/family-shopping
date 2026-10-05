@@ -16,7 +16,7 @@ No database seed is required. An empty database is supported. If the database is
 
 - Multiple shared lists, archive and restore; archived lists are read-only in the UI.
 - Items grouped into six aisles, with separate Yet to buy and Bought tabs.
-- Add/edit name, quantity, category, optional estimated price, and recurring flag.
+- Add/edit name, quantity, category, purchase location, optional estimated price, and recurring flag.
 - One-tap purchase status with the purchaser and purchase date recorded.
 - Buy again creates a new pending item and preserves the original history entry.
 - Delete an item or permanently clear bought items after confirmation.
@@ -57,19 +57,19 @@ public/icon.svg
 
 All responses are JSON and uncached. Invalid input returns 400, missing records 404, and database/configuration failures 503. Object IDs and editable fields are validated. Items are populated with the adding/purchasing member.
 
-| Method | Endpoint                            | Body / behavior                                                                               |
-| ------ | ----------------------------------- | --------------------------------------------------------------------------------------------- |
-| GET    | `/api/users`                        | All members                                                                                   |
-| POST   | `/api/users`                        | `{ "name": "Aama" }`                                                                          |
-| GET    | `/api/lists`                        | All lists, including archived                                                                 |
-| POST   | `/api/lists`                        | `{ "title": "Groceries", "createdBy": "USER_ID" }`                                            |
-| PATCH  | `/api/lists/LIST_ID`                | `title` and/or `isArchived`                                                                   |
-| DELETE | `/api/lists/LIST_ID`                | Delete list and its items                                                                     |
-| DELETE | `/api/lists/LIST_ID?completed=true` | Delete bought items only                                                                      |
-| GET    | `/api/items?listId=LIST_ID`         | All items in a list                                                                           |
-| POST   | `/api/items`                        | `name`, `quantity`, `category`, `listId`, `addedBy`; optional `estimatedPrice`, `isRecurring` |
-| PATCH  | `/api/items/ITEM_ID`                | Editable item fields; status changes require `actorId`                                        |
-| DELETE | `/api/items/ITEM_ID`                | Delete item                                                                                   |
+| Method | Endpoint                            | Body / behavior                                                                                                   |
+| ------ | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/users`                        | All members                                                                                                       |
+| POST   | `/api/users`                        | `{ "name": "Aama" }`                                                                                              |
+| GET    | `/api/lists`                        | All lists, including archived                                                                                     |
+| POST   | `/api/lists`                        | `{ "title": "Groceries", "createdBy": "USER_ID" }`                                                                |
+| PATCH  | `/api/lists/LIST_ID`                | `title` and/or `isArchived`                                                                                       |
+| DELETE | `/api/lists/LIST_ID`                | Delete list and its items                                                                                         |
+| DELETE | `/api/lists/LIST_ID?completed=true` | Delete bought items only                                                                                          |
+| GET    | `/api/items?listId=LIST_ID`         | All items in a list                                                                                               |
+| POST   | `/api/items`                        | `name`, `quantity`, `category`, `listId`, `addedBy`; optional `purchaseLocation`, `estimatedPrice`, `isRecurring` |
+| PATCH  | `/api/items/ITEM_ID`                | Editable item fields; status changes require `actorId`                                                            |
+| DELETE | `/api/items/ITEM_ID`                | Delete item                                                                                                       |
 
 To mark an item bought, send `{ "status": "BOUGHT", "actorId": "USER_ID" }`. To undo, send `YET_TO_BUY` with the actor; purchaser and timestamp are cleared. Explicit status assignments are safe to retry. Buy again uses POST with the original item's fields and current actor.
 
