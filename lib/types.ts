@@ -22,7 +22,7 @@ export type Item = {
     name: string;
     quantity: string;
     category: Category;
-    status: "YET_TO_BUY" | "BOUGHT";
+    status: "PENDING" | "PARTIAL" | "COMPLETED";
     estimatedPrice?: number | null;
     purchaseLocation?: string;
     addedBy: User;

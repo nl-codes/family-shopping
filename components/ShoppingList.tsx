@@ -168,8 +168,8 @@ export default function ShoppingList() {
         }
     };
     const selected = lists.find((l) => l._id === listId),
-        pending = items.filter((i) => i.status === "YET_TO_BUY"),
-        bought = items.filter((i) => i.status === "BOUGHT");
+        pending = items.filter((i) => i.status !== "COMPLETED"),
+        bought = items.filter((i) => i.status === "COMPLETED");
     const visibleItems =
         tab === "ALL" ? items : tab === "YET_TO_BUY" ? pending : bought;
     const customCategories = [...new Set(items.map((item) => item.category))]
@@ -231,9 +231,13 @@ export default function ShoppingList() {
             busy={busy || !actor || !!selected?.isArchived}
             onToggle={() =>
                 void mutateItem(item, "PATCH", {
-                    status: item.status === "BOUGHT" ? "YET_TO_BUY" : "BOUGHT",
+                    status:
+                        item.status === "COMPLETED" ? "PENDING" : "COMPLETED",
                     actorId: actor,
                 })
+            }
+            onStatusChange={(status) =>
+                void mutateItem(item, "PATCH", { status, actorId: actor })
             }
             onEdit={() => setEditing(item)}
             onDelete={() => {
@@ -273,7 +277,8 @@ export default function ShoppingList() {
                         className="icon-button"
                         aria-label="Create list"
                         onClick={() => setModal("list")}
-                        disabled={!actor || busy}>
+                        disabled={!actor || busy}
+                    >
                         <Plus size={18} />
                     </button>
                 </div>
@@ -283,7 +288,8 @@ export default function ShoppingList() {
                             key={list._id}
                             disabled={busy}
                             onClick={() => chooseList(list)}
-                            className={`list-link ${listId === list._id ? "active" : ""}`}>
+                            className={`list-link ${listId === list._id ? "active" : ""}`}
+                        >
                             <ListIcon size={18} />
                             <span>{list.title}</span>
                             {list.isArchived && <Archive size={14} />}
@@ -298,7 +304,8 @@ export default function ShoppingList() {
                 </nav>
                 <button
                     className="text-button archive-link"
-                    onClick={() => setShowArchived(!showArchived)}>
+                    onClick={() => setShowArchived(!showArchived)}
+                >
                     <Archive size={16} />
                     {showArchived
                         ? "Hide archived lists"
@@ -346,7 +353,8 @@ export default function ShoppingList() {
                                     "family-member",
                                     event.target.value,
                                 );
-                            }}>
+                            }}
+                        >
                             {!users.length && (
                                 <option value="">Choose member</option>
                             )}
@@ -360,7 +368,8 @@ export default function ShoppingList() {
                             className="icon-button"
                             onClick={() => setModal("user")}
                             aria-label="Add family member"
-                            disabled={busy}>
+                            disabled={busy}
+                        >
                             <Plus size={17} />
                         </button>
                     </div>
@@ -384,7 +393,8 @@ export default function ShoppingList() {
                                 !actor ||
                                 busy ||
                                 selected?.isArchived
-                            }>
+                            }
+                        >
                             <Plus size={20} />
                             Add item
                         </button>
@@ -398,7 +408,8 @@ export default function ShoppingList() {
                                     (value) => value._id === e.target.value,
                                 );
                                 if (list) chooseList(list);
-                            }}>
+                            }}
+                        >
                             <option value="" disabled>
                                 Select a list
                             </option>
@@ -412,13 +423,15 @@ export default function ShoppingList() {
                         <button
                             className="icon-button"
                             onClick={() => setModal("list")}
-                            disabled={!actor}>
+                            disabled={!actor}
+                        >
                             <Plus />
                         </button>
                     </div>
                     <section
                         className="browse-lists"
-                        aria-labelledby="browse-lists-title">
+                        aria-labelledby="browse-lists-title"
+                    >
                         <div className="browse-heading">
                             <div>
                                 <span className="eyebrow">
@@ -448,7 +461,8 @@ export default function ShoppingList() {
                                     key={list._id}
                                     className={`browse-list ${listId === list._id ? "selected" : ""}`}
                                     onClick={() => chooseList(list)}
-                                    disabled={busy}>
+                                    disabled={busy}
+                                >
                                     <span className="browse-list-icon">
                                         {list.unlocked ? (
                                             <ListIcon size={17} />
@@ -488,7 +502,8 @@ export default function ShoppingList() {
                                         await load();
                                         await refreshItems();
                                     })
-                                }>
+                                }
+                            >
                                 <RefreshCw size={16} />
                                 Retry
                             </button>
@@ -540,11 +555,13 @@ export default function ShoppingList() {
                             <div
                                 className="tabs"
                                 role="group"
-                                aria-label="Filter shopping items">
+                                aria-label="Filter shopping items"
+                            >
                                 <button
                                     className={tab === "ALL" ? "selected" : ""}
                                     aria-pressed={tab === "ALL"}
-                                    onClick={() => setTab("ALL")}>
+                                    onClick={() => setTab("ALL")}
+                                >
                                     View all <span>{items.length}</span>
                                 </button>
                                 <button
@@ -552,7 +569,8 @@ export default function ShoppingList() {
                                         tab === "YET_TO_BUY" ? "selected" : ""
                                     }
                                     aria-pressed={tab === "YET_TO_BUY"}
-                                    onClick={() => setTab("YET_TO_BUY")}>
+                                    onClick={() => setTab("YET_TO_BUY")}
+                                >
                                     Yet to buy <span>{pending.length}</span>
                                 </button>
                                 <button
@@ -560,7 +578,8 @@ export default function ShoppingList() {
                                         tab === "BOUGHT" ? "selected" : ""
                                     }
                                     aria-pressed={tab === "BOUGHT"}
-                                    onClick={() => setTab("BOUGHT")}>
+                                    onClick={() => setTab("BOUGHT")}
+                                >
                                     Bought <span>{bought.length}</span>
                                 </button>
                             </div>
@@ -568,7 +587,8 @@ export default function ShoppingList() {
                                 className="icon-button"
                                 aria-label="Refresh shopping list"
                                 onClick={() => void run(refreshItems)}
-                                disabled={busy || !listId}>
+                                disabled={busy || !listId}
+                            >
                                 <RefreshCw size={17} />
                             </button>
                         </div>
@@ -577,7 +597,8 @@ export default function ShoppingList() {
                             <div
                                 className="view-switcher"
                                 role="group"
-                                aria-label="Item view format">
+                                aria-label="Item view format"
+                            >
                                 {viewOptions.map(
                                     ({ value, label, icon: Icon }) => (
                                         <button
@@ -585,7 +606,8 @@ export default function ShoppingList() {
                                             type="button"
                                             aria-label={`${label} view`}
                                             aria-pressed={itemView === value}
-                                            onClick={() => changeView(value)}>
+                                            onClick={() => changeView(value)}
+                                        >
                                             <Icon
                                                 size={16}
                                                 aria-hidden="true"
@@ -614,7 +636,8 @@ export default function ShoppingList() {
                                     className="primary"
                                     onClick={() =>
                                         setModal(actor ? "list" : "user")
-                                    }>
+                                    }
+                                >
                                     <Plus size={18} />
                                     {actor
                                         ? "Create a list"
@@ -689,7 +712,8 @@ export default function ShoppingList() {
                                                         );
                                                         await refreshItems();
                                                     });
-                                            }}>
+                                            }}
+                                        >
                                             Clear bought items
                                         </button>
                                     )}
@@ -720,7 +744,8 @@ export default function ShoppingList() {
                                         }
                                         await load();
                                     })
-                                }>
+                                }
+                            >
                                 <Archive size={15} />
                                 {selected.isArchived
                                     ? "Restore list"
@@ -744,7 +769,8 @@ export default function ShoppingList() {
                                     className="owner-code"
                                     onClick={() => void copyOwnerCode()}
                                     aria-label="Copy access code"
-                                    title="Copy access code">
+                                    title="Copy access code"
+                                >
                                     <code>{ownerCode}</code>
                                     <span>
                                         {ownerCodeCopied ? "Copied" : "Copy"}
@@ -754,7 +780,8 @@ export default function ShoppingList() {
                                 <button
                                     className="secondary"
                                     onClick={() => void loadOwnerCode()}
-                                    disabled={ownerCodeLoading}>
+                                    disabled={ownerCodeLoading}
+                                >
                                     <Eye size={16} />
                                     {ownerCodeLoading
                                         ? "Loading…"
@@ -815,7 +842,8 @@ export default function ShoppingList() {
                         className="modal"
                         role="dialog"
                         aria-modal="true"
-                        aria-labelledby="create-title">
+                        aria-labelledby="create-title"
+                    >
                         <h2 id="create-title">
                             {modal === "user"
                                 ? "Meet the family"
@@ -858,7 +886,8 @@ export default function ShoppingList() {
                                     await load();
                                     setModal(null);
                                 });
-                            }}>
+                            }}
+                        >
                             <label>
                                 {modal === "user" ? "Your name" : "List name"}
                                 <input
@@ -883,7 +912,8 @@ export default function ShoppingList() {
                                     type="button"
                                     className="secondary"
                                     onClick={() => setModal(null)}
-                                    disabled={busy}>
+                                    disabled={busy}
+                                >
                                     Cancel
                                 </button>
                                 <button className="primary" disabled={busy}>
@@ -900,14 +930,16 @@ export default function ShoppingList() {
                         className="modal"
                         role="dialog"
                         aria-modal="true"
-                        aria-labelledby="access-title">
+                        aria-labelledby="access-title"
+                    >
                         <div className="section-heading">
                             <h2 id="access-title">Unlock {accessList.title}</h2>
                             <button
                                 className="icon-button"
                                 onClick={() => setAccessListId("")}
                                 aria-label="Close access form"
-                                disabled={busy}>
+                                disabled={busy}
+                            >
                                 <span aria-hidden="true">×</span>
                             </button>
                         </div>
@@ -939,7 +971,8 @@ export default function ShoppingList() {
                                         setBusy(false);
                                     }
                                 })();
-                            }}>
+                            }}
+                        >
                             <label>
                                 Access code
                                 <input
@@ -971,7 +1004,8 @@ export default function ShoppingList() {
                                     type="button"
                                     className="secondary"
                                     onClick={() => setAccessListId("")}
-                                    disabled={busy}>
+                                    disabled={busy}
+                                >
                                     Cancel
                                 </button>
                                 <button
@@ -979,7 +1013,8 @@ export default function ShoppingList() {
                                     disabled={
                                         busy ||
                                         accessCode.replace("-", "").length !== 6
-                                    }>
+                                    }
+                                >
                                     <KeyRound size={17} />
                                     {busy ? "Checking…" : "Open list"}
                                 </button>

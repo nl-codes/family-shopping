@@ -6,6 +6,7 @@ export default function ItemRow({
     busy,
     onToggle,
     onEdit,
+    onStatusChange,
     onDelete,
     onDuplicate,
 }: {
@@ -13,10 +14,11 @@ export default function ItemRow({
     busy: boolean;
     onToggle: () => void;
     onEdit: () => void;
+    onStatusChange: (status: Item["status"]) => void;
     onDelete: () => void;
     onDuplicate: () => void;
 }) {
-    const bought = item.status === "BOUGHT";
+    const bought = item.status === "COMPLETED";
     return (
         <div className={`item-row ${bought ? "bought" : ""}`}>
             <button
@@ -25,7 +27,8 @@ export default function ItemRow({
                 role="checkbox"
                 aria-checked={bought}
                 disabled={busy}
-                aria-label={`Mark ${item.name} ${bought ? "yet to buy" : "bought"}`}>
+                aria-label={`Mark ${item.name} ${bought ? "yet to buy" : "bought"}`}
+            >
                 {bought && <Check size={19} />}
             </button>
             <div className="item-info">
@@ -33,7 +36,8 @@ export default function ItemRow({
                     <span>{item.name}</span>
                     <strong
                         className="item-quantity"
-                        aria-label={`Quantity: ${item.quantity}`}>
+                        aria-label={`Quantity: ${item.quantity}`}
+                    >
                         {item.quantity}
                     </strong>
                     {item.isRecurring && (
@@ -53,6 +57,19 @@ export default function ItemRow({
                         </>
                     )}
                 </div>
+                <select
+                    className={`item-status status-${item.status.toLowerCase()}`}
+                    aria-label={`Status of ${item.name}`}
+                    value={item.status}
+                    disabled={busy}
+                    onChange={(event) =>
+                        onStatusChange(event.target.value as Item["status"])
+                    }
+                >
+                    <option value="PENDING">Pending</option>
+                    <option value="PARTIAL">Partial</option>
+                    <option value="COMPLETED">Completed</option>
+                </select>
                 {bought && (
                     <div className="purchaser">
                         Bought by {item.boughtBy?.name ?? "Family"}
@@ -67,7 +84,8 @@ export default function ItemRow({
                         className="text-button buy-again"
                         aria-label={`Buy ${item.name} again`}
                         onClick={onDuplicate}
-                        disabled={busy}>
+                        disabled={busy}
+                    >
                         <RotateCcw size={15} />
                         <span>Buy again</span>
                     </button>
@@ -77,7 +95,8 @@ export default function ItemRow({
                             className="icon-button edit"
                             onClick={onEdit}
                             disabled={busy}
-                            aria-label={`Edit ${item.name}`}>
+                            aria-label={`Edit ${item.name}`}
+                        >
                             <Pencil size={16} />
                         </button>
                         <button
@@ -85,7 +104,8 @@ export default function ItemRow({
                             onClick={onDuplicate}
                             disabled={busy}
                             aria-label={`Duplicate ${item.name}`}
-                            title="Duplicate item">
+                            title="Duplicate item"
+                        >
                             <Copy size={16} />
                         </button>
                     </>
@@ -94,7 +114,8 @@ export default function ItemRow({
                     className="icon-button delete"
                     onClick={onDelete}
                     disabled={busy}
-                    aria-label={`Delete ${item.name}`}>
+                    aria-label={`Delete ${item.name}`}
+                >
                     <Trash2 size={16} />
                 </button>
             </div>
