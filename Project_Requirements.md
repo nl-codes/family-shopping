@@ -8,10 +8,10 @@ The app will be used by family members in both **Nepal and Australia**, so it ne
 
 ## 1. Core Tech Stack
 
-- **Framework:** Next.js (App Router, TypeScript)
+- **Framework:** React
 - **Database:** MongoDB Atlas (mongoose)
 - **Styling:** Tailwind CSS + Lucide Icons (or Shadcn UI)
-- **Authentication:** No Authentication to view, but ask a hard code password before allwoing to edit the list.
+- **Authentication:** No Authentication
 - **Deployment Target:** Vercel
 
 ---
@@ -22,7 +22,6 @@ The app will be used by family members in both **Nepal and Australia**, so it ne
 
 - `_id`: ObjectId
 - `name`: String
-- `password`: String
 - `createdAt`: Date
 
 ### List Model
