@@ -71,7 +71,7 @@ All responses are JSON and uncached. Invalid input returns 400, missing records 
 | PATCH  | `/api/items/ITEM_ID`                | Editable item fields; status changes require `actorId`                                                            |
 | DELETE | `/api/items/ITEM_ID`                | Delete item                                                                                                       |
 
-To mark an item bought, send `{ "status": "BOUGHT", "actorId": "USER_ID" }`. To undo, send `YET_TO_BUY` with the actor; purchaser and timestamp are cleared. Explicit status assignments are safe to retry. Buy again uses POST with the original item's fields and current actor.
+To mark an item bought, send `{ "status": "COMPLETED", "actorId": "USER_ID" }`. To undo, send `PENDING` with the actor; purchaser and timestamp are cleared. Explicit status assignments are safe to retry. Buy again uses POST with the original item's fields and current actor.
 
 ## Checks
 
@@ -87,3 +87,7 @@ Manual integration check with Atlas: create two members and lists, add/edit item
 Import this repository into Vercel as a Next.js project. Set `MONGODB_URI` in its environment variables for the required environments, configure Atlas Network Access for your deployment's outbound connectivity, and deploy. API routes use the Node.js runtime. The build script uses Webpack for compatibility with local worker restrictions. Mongoose connections and connection promises are cached per serverless instance, with a small pool and retry after connection failure.
 
 As requested, there is no authentication: anyone with the deployed URL can read and change family data, and member selection is attribution rather than identity verification. Share the URL accordingly.
+
+## Item progress
+
+Items default to `PENDING`. Each item has a Pending / Partial / Completed selector in every view. Pending and Partial appear under Yet to buy; Completed appears under Bought. Checking an item sets Completed and records the purchaser/date. Unchecking sets Pending and clears purchaser/date. Duplicating or buying again creates a new Pending item.

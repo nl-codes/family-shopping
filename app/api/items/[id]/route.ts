@@ -2,7 +2,7 @@ import { z } from "zod";
 import { api, id, requireRecord, HttpError } from "@/lib/api";
 import { ItemModel, UserModel, ListModel } from "@/models";
 import { itemInput } from "@/lib/validation";
-import { requireListAccess, sameOrigin } from '@/lib/list-access';
+import { requireListAccess, sameOrigin } from "@/lib/list-access";
 type Context = { params: Promise<{ id: string }> };
 export async function PATCH(request: Request, context: Context) {
   return api(async () => {
@@ -11,7 +11,7 @@ export async function PATCH(request: Request, context: Context) {
     const data = itemInput
       .partial()
       .extend({
-        status: z.enum(["YET_TO_BUY", "BOUGHT"]).optional(),
+        status: z.enum(["PENDING", "PARTIAL", "COMPLETED"]).optional(),
         actorId: id.optional(),
       })
       .parse(await request.json());
@@ -25,8 +25,8 @@ export async function PATCH(request: Request, context: Context) {
     if (data.status) {
       if (!actorId) throw new HttpError("Choose a family member", 400);
       await requireRecord(UserModel, actorId);
-      update.boughtBy = data.status === "BOUGHT" ? actorId : null;
-      update.buyLocation = data.status === "BOUGHT" ? new Date() : null;
+      update.boughtBy = data.status === "COMPLETED" ? actorId : null;
+      update.buyLocation = data.status === "COMPLETED" ? new Date() : null;
     }
     const item = await ItemModel.findByIdAndUpdate(itemId, update, {
       new: true,

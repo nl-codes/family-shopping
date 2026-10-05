@@ -33,8 +33,8 @@ const itemSchema = new Schema(
         },
         status: {
             type: String,
-            enum: ["YET_TO_BUY", "BOUGHT"],
-            default: "YET_TO_BUY",
+            enum: ["PENDING", "PARTIAL", "COMPLETED"],
+            default: "PENDING",
         },
         estimatedPrice: { type: Number, min: 0 },
         purchaseLocation: { type: String, trim: true, maxlength: 120 },
